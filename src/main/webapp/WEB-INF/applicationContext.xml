@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+    <bean id="ofyService" class="endpointstest.OfyService" init-method="init">
+        <property name="namespace" value="1-5"></property>
+        <property name="classes">
+            <set>
+                <!-- all entity classes must be registered here -->
+                <value>endpointstest.CredentialEntity</value>
+            </set>
+        </property>
+    </bean>
+
+    <bean id="credentialStorage" class="endpointstest.MemoryCredentialStorage">
+    </bean>
+
+    <!-- bean id="credentialStorage" class="endpointstest.DatastoreCredentialStorageImpl">
+        <property name="ofyService" ref="ofyService"/>
+    </bean -->
+
+    <bean id="adwordsService" class="endpointstest.AdwordsService">
+        <property name="credentialStorage" ref="credentialStorage"/>
+        <property name="clientId" value="894185615170-8f7h45jj25e310smph5do6lglnbtnggm.apps.googleusercontent.com"/>
+        <property name="clientSecret" value="rl9HUYNm0vTOic3n-JnWwYR2"/>
+        <property name="developerToken" value="LUQskC-bLr_NBYOiPfGw5g"/>
+        <property name="userAgent" value="endpointsTest"/>
+    </bean>
+
+</beans>

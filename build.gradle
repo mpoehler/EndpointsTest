@@ -1,0 +1,75 @@
+apply plugin: 'java'
+apply plugin: 'war'
+apply plugin: 'appengine'
+
+// fix version of the wrapper
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.6'
+}
+
+// appengine requires java version 1.7
+sourceCompatibility = JavaVersion.VERSION_1_7
+targetCompatibility = JavaVersion.VERSION_1_7
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+// this is the appengine version
+version = '1.0'
+
+repositories {
+    mavenLocal()
+    jcenter()
+}
+
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.google.appengine:gradle-appengine-plugin:1.9.23'
+    }
+}
+
+dependencies {
+    appengineSdk 'com.google.appengine:appengine-java-sdk:1.9.28'
+    compile 'com.google.appengine:appengine-api-1.0-sdk:1.9.28'
+    compile 'com.google.appengine:appengine-endpoints:1.9.28'
+    compile 'com.google.api-client:google-api-client-appengine:1.20.0'
+    compile 'com.google.api-ads:adwords-appengine:2.4.0'
+
+    compile 'org.springframework:spring-webmvc:4.0.6.RELEASE'
+    compile 'com.googlecode.objectify:objectify:5.0.3'
+
+    runtime 'javax.servlet:servlet-api:2.5'
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'com.google.appengine:appengine-testing:1.9.25'
+    testCompile 'com.google.appengine:appengine-api-stubs:1.9.25'
+}
+
+appengine {
+    downloadSdk = true
+    appcfg {
+        email = "mpoehler@gmail.com"
+
+        // noCookies = true
+        oauth2 = true
+        // passIn = true
+
+        // this lets you connect to the appengine dev-server (jetty) with remote debugging
+        jvmFlags = ['-Xdebug', '-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8000']
+
+        logs {
+            severity = 1
+            outputFile = file('mylogs.txt')
+        }
+
+        app {
+            id = "endpoints-test-970"
+        }
+    }
+}

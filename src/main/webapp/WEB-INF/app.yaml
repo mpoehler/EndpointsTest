@@ -1,0 +1,24 @@
+application: endpoints-test-970
+runtime: java
+version: 1
+threadsafe: true
+
+handlers:
+  - url: /_ah/spi/*
+    name: SystemServiceServlet
+    servlet: com.google.api.server.spi.SystemServiceServlet
+    init_params:
+      services: endpointstest.Service
+  - url: /login
+    name: LoginServlet
+    servlet: endpointstest.LoginServlet
+  - url: /logout
+    name: LogoutServlet
+    servlet: endpointstest.LogoutServlet
+
+listeners:
+  - org.springframework.web.context.ContextLoaderListener
+
+context_params:
+  contextConfigLocation: /WEB-INF/applicationContext.xml
+  contextClass: endpointstest.CustomXmlWebApplicationContext
