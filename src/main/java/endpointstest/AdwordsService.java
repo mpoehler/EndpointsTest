@@ -35,6 +35,8 @@ public class AdwordsService {
 
     private Map<String, AdWordsSession> sessionMap = new HashMap<String, AdWordsSession>();
 
+    private AdWordsServices adWordsServices = new AdWordsServices();
+
     /**
      * This is a try to cache the adwords session
      *
@@ -105,22 +107,21 @@ public class AdwordsService {
     /**
      * lists all Accounts for the given userId
      */
-    public List<AdwordsAccount> listAccouts(String userId) throws AdWordsException {
+    public List<AdwordsAccount> listAccounts(String userId) throws AdWordsException {
 
+        log.info("call list Accounts");
         List<AdwordsAccount> result = new ArrayList<AdwordsAccount>();
 
         AdWordsSession session = createSession(null, userId);
-
-        AdWordsServices adWordsServices = new AdWordsServices();
-        log.info("AdwordsServices created");
+        log.info("AdwordsSession without clientCustomerId created");
 
         CustomerServiceInterface customerService = adWordsServices.get(session, CustomerServiceInterface.class);
-
-
         log.info("customerService created");
+
         Customer customer = null;
         try {
             customer = customerService.get();
+            log.info("customerService.get() done");
 
             if (customer.isCanManageClients()) {
                 // customer is MCC Account
@@ -129,10 +130,9 @@ public class AdwordsService {
                 // session = new AdWordsSession.Builder().withOAuth2Credential(credential).from(config).withClientCustomerId("" + customer.getCustomerId()).build();
                 session = getSession("" + customer.getCustomerId(), userId);
 
-                log.info("Adwords session created");
+                log.info("Adwords session with clientCustomerId created");
 
                 ManagedCustomerServiceInterface managedCustomerService = adWordsServices.get(session, ManagedCustomerServiceInterface.class);
-
                 log.info("managedCustomerService created");
 
                 Selector selector = new SelectorBuilder().fields("CustomerId", "Name", "CompanyName", "CanManageClients", "CurrencyCode", "DateTimeZone").build();

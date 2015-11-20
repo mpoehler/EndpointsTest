@@ -46,10 +46,16 @@
               var request =
                       gapi.client.oauth2.userinfo.get().execute(function(resp) {
                           if (!resp.code) {
-                              console.log("User is signed in, TODO: call my Endpoint");
+                              console.log("User is signed in, call my Endpoint");
                               gapi.client.endpointstest.oauth.user().execute(function(resp) {
                                   console.log("result from function: " + resp);
                               });
+
+                              console.log("now call the account list");
+                              gapi.client.endpointstest.adwords.listaccounts().execute(function(resp) {
+                                  console.log("result from adwordslist: " + resp);
+                              });
+
                           }
                           console.log(resp);
                       });
