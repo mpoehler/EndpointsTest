@@ -1,0 +1,98 @@
+<html>
+<head>
+    <title>Endpoint-App</title>
+</head>
+<body>
+    <a href="/logout">Logout</a>
+    <div id="log"></div>
+    <ul id="accounts"></ul>
+
+    <script type="text/javascript">
+
+        function init() {
+            console.log("function init called.");
+            // Loads the OAuth and helloworld APIs asynchronously, and triggers login
+            // when they have completed.
+            var apisToLoad;
+            var callback = function () {
+                if (--apisToLoad == 0) {
+                    console.log("all apis loaded");
+                    signin(true, userAuthed);
+                }
+            };
+
+            apisToLoad = 2; // must match number of calls to gapi.client.load()
+            gapi.client.load('endpointstest', 'v1', callback, '//' + window.location.host + '/_ah/api');
+            gapi.client.load('oauth2', 'v2', callback);
+        }
+        function signin(mode, authorizeCallback) {
+            console.log("function signin called");
+            gapi.auth.authorize({
+                client_id: '894185615170-8f7h45jj25e310smph5do6lglnbtnggm.apps.googleusercontent.com',
+                scope: ['https://www.googleapis.com/auth/userinfo.email'],
+                immediate: mode
+            }, authorizeCallback);
+        }
+
+        function userAuthed() {
+            console.log("function userAuthed called");
+            // wait 1 second
+            window.setTimeout(gapi.client.oauth2.userinfo.get().execute(function(resp) {
+
+                console.log(resp);
+
+                var callSuccessful = !resp.code;
+                if (callSuccessful) {
+
+                    var el = document.createElement("span");
+                    el.textContent = 'Hi ' + resp.name;
+                    document.getElementById("log").appendChild(el);
+
+                    var el2 = document.createElement("img");
+                    el2.src = resp.picture;
+                    document.getElementById("log").appendChild(el2);
+
+                    console.log("now call the account list");
+                    gapi.client.endpointstest.adwords.listcachedaccounts().execute(function(resp) {
+                        console.log("result from cached adwordslist: " + resp);
+                        if (resp.items) {
+                            // update list
+                            resp.items.forEach(function(value) {
+                                var el = document.createElement("li");
+                                el.textContent = value.name;
+                                document.getElementById("accounts").appendChild(el);
+                            });
+                        } else {
+                            console.log("cache missed!");
+                        }
+                    });
+
+                    console.log("now call the cached account list");
+                    gapi.client.endpointstest.adwords.listaccounts().execute(function(resp) {
+                        console.log("result from adwordslist: " + resp);
+                        // delete existing list
+                        var myNode = document.getElementById("accounts");
+                        while (myNode.firstChild) {
+                            myNode.removeChild(myNode.firstChild);
+                        }
+                        // update list
+                        resp.items.forEach(function(value) {
+                            var el = document.createElement("li");
+                            el.textContent = value.name;
+                            document.getElementById("accounts").appendChild(el);
+                        });
+                    });
+
+                } else {
+                    console.log("Server-Error: " + resp.message);
+                }
+            }),1000);
+
+
+
+        }
+    </script>
+    <script src="https://apis.google.com/js/client.js?onload=init">
+    </script>
+</body>
+</html>

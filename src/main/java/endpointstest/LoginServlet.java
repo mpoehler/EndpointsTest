@@ -9,7 +9,6 @@ import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
-import com.google.common.collect.Lists;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.context.ApplicationContext;
@@ -20,7 +19,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Created by marco on 11/17/15.
@@ -29,35 +27,22 @@ public class LoginServlet extends HttpServlet {
 
     private static Log log = LogFactory.getLog(LoginServlet.class);
 
-    private static String clientId = "894185615170-8f7h45jj25e310smph5do6lglnbtnggm.apps.googleusercontent.com";
-    private static String clientSecret = "rl9HUYNm0vTOic3n-JnWwYR2";
-
-    public static final String ADWORDS_API_SCOPE = "https://www.googleapis.com/auth/adwords";
-    public static final String ANALYTICS_API_SCOPE = "https://www.googleapis.com/auth/analytics.readonly";
-    public static final String SEARCHCONSOLE_API_SCOPE = "https://www.googleapis.com/auth/webmasters.readonly";
-    public static final String EMAIL_SCOPE = "https://www.googleapis.com/auth/userinfo.email";
-
-    private static final List<String> SCOPES = Lists.newArrayList(ADWORDS_API_SCOPE, ANALYTICS_API_SCOPE, EMAIL_SCOPE, SEARCHCONSOLE_API_SCOPE);
-
     private UserService userService;;
 
     private CredentialStorage credentialStorage;
 
-    private AdwordsService adwordsService;
+    private AuthConfiguration authConfiguration;
 
-    private String targetUrl = "/";
+    private String targetUrl = "/app";
 
     @Override
     public void init() throws ServletException {
         super.init();
 
         ApplicationContext applicationContext = WebApplicationContextUtils.getWebApplicationContext(this.getServletContext());
-
         userService = UserServiceFactory.getUserService();
-
         credentialStorage = (CredentialStorage) applicationContext.getBean("credentialStorage");
-
-        adwordsService = (AdwordsService) applicationContext.getBean("adwordsService");
+        authConfiguration = (AuthConfiguration) applicationContext.getBean("authConfiguration");
     }
 
     @Override
@@ -69,22 +54,23 @@ public class LoginServlet extends HttpServlet {
             // user is not logged in
             // send to login url and forward back to here
             log.info("forward user to application login");
+
             resp.sendRedirect(userService.createLoginURL(req.getRequestURI()));
             return;
         }
 
-        log.info("user is logged in");
+        log.info("user is logged in (server-side application login) with userId " + user.getEmail());
 
-        log.info("check for valid access/refresh token");
-        if (credentialStorage.get(user.getUserId())==null || !isTokenValid(credentialStorage.get(user.getUserId()))) {
-            log.info("no token or invalid token in credential storage");
+        log.info("check for valid access/refresh token (oauth for google services)");
+        if (credentialStorage.get(user.getEmail())==null) {
+            log.info("no token in credential storage");
             String callbackUrl = req.getRequestURL() + "?callback=true";
 
             GoogleClientSecrets clientSecrets;
             try {
                 clientSecrets = new GoogleClientSecretsBuilder()
                         .forApi(GoogleClientSecretsBuilder.Api.ADWORDS)
-                        .withClientSecrets(clientId, clientSecret)
+                        .withClientSecrets(authConfiguration.getClientId(), authConfiguration.getClientSecret())
                         .build();
             } catch (ValidationException e) {
                 throw new IOException("Problem on generation of GoogleClientSecrets", e);
@@ -94,11 +80,11 @@ public class LoginServlet extends HttpServlet {
                     new NetHttpTransport(),
                     new JacksonFactory(),
                     clientSecrets,
-                    SCOPES)
+                    authConfiguration.getScopes())
                     .setApprovalPrompt("force")
                     .setAccessType("offline").build();
 
-            if (req.getParameter("callback")==null) {
+            if (req.getParameter("callback") == null) {
                 log.info("forward to oauth dialog");
                 String authorizeUrl = authorizationFlow.newAuthorizationUrl().setRedirectUri(callbackUrl).build();
 
@@ -109,8 +95,7 @@ public class LoginServlet extends HttpServlet {
 
             log.info("received auth callback");
             String authorizationCode = req.getParameter("code");
-            GoogleAuthorizationCodeTokenRequest tokenRequest =
-                    authorizationFlow.newTokenRequest(authorizationCode);
+            GoogleAuthorizationCodeTokenRequest tokenRequest = authorizationFlow.newTokenRequest(authorizationCode);
             tokenRequest.setRedirectUri(callbackUrl);
             GoogleTokenResponse tokenResponse = tokenRequest.execute();
 
@@ -125,23 +110,20 @@ public class LoginServlet extends HttpServlet {
             log.info("Credential-Access: " + credential.getAccessToken());
             log.info("Credential-ExpiresInSeconds: " + credential.getExpiresInSeconds());
 
-            credentialStorage.save(user.getUserId(), credential);
+            credentialStorage.save(user.getEmail(), credential);
         } else {
-            log.info("valid credentials existing in database");
-            Credential credential = credentialStorage.get(user.getUserId());
+            log.info("credentials existing in database");
+            Credential credential = credentialStorage.get(user.getEmail());
+
+            // TODO check here that the credentials work!!!
+            // - simple call to adwords?
+
             log.info("Credential-Refresh: " + credential.getRefreshToken());
             log.info("Credential-Access: " + credential.getAccessToken());
+            log.info("Credential-ExpiresInSeconds: " + credential.getExpiresInSeconds());
         }
-
 
         log.info("redirect the user to the targetUrl");
         resp.sendRedirect(req.getRequestURL().substring(0,req.getRequestURL().indexOf("/", "https://".length())) + targetUrl);
     }
-
-    public boolean isTokenValid(Credential credential) {
-        // check if the token is valid (expired?), is a refresh token set?
-        // check if we can access the API with the given token
-        return true;
-    }
-
 }

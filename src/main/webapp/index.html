@@ -1,0 +1,27 @@
+<html>
+    <head></head>
+    <body>
+        <h1>TestEndpoints</h1>
+        <a href="/login">Hier gehts zur app.</a>
+
+
+        <!-- the following loads the endpoints api and warms up -->
+        <script type="text/javascript">
+            function init() {
+                var apisToLoad;
+                var callback = function () {
+                    if (--apisToLoad == 0) {
+                        console.log("all apis loaded");
+                        gapi.client.endpointstest.warmup().execute(function(resp) {
+                            console.log("warmup done.");
+                        });
+                    }
+                };
+                apisToLoad = 1; // must match number of calls to gapi.client.load()
+                gapi.client.load('endpointstest', 'v1', callback, '//' + window.location.host + '/_ah/api');
+            }
+        </script>
+        <script src="https://apis.google.com/js/client.js?onload=init">
+        </script>
+    </body>
+</html>

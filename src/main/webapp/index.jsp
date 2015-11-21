@@ -26,7 +26,7 @@
                       console.log("all apis loaded");
                       signin(true, userAuthed);
                   }
-              }
+              };
 
               apisToLoad = 2; // must match number of calls to gapi.client.load()
               gapi.client.load('endpointstest', 'v1', callback, '//' + window.location.host + '/_ah/api');
@@ -45,19 +45,25 @@
               console.log("function userAuthed called");
               var request =
                       gapi.client.oauth2.userinfo.get().execute(function(resp) {
-                          if (!resp.code) {
+                          var callSuccessful = !resp.code;
+                          if (callSuccessful) {
+
                               console.log("User is signed in, call my Endpoint");
                               gapi.client.endpointstest.oauth.user().execute(function(resp) {
                                   console.log("result from function: " + resp);
                               });
 
-                              console.log("now call the account list");
+                              console.log("now call the cached account list");
                               gapi.client.endpointstest.adwords.listaccounts().execute(function(resp) {
-                                  console.log("result from adwordslist: " + resp);
+                                  console.log("result from cached adwordslist: " + resp);
                               });
 
+                              gapi.client.endpointstest.adwords.listcachedaccounts().execute(function(resp) {
+                                  console.log("result from cached adwordslist: " + resp);
+                              });
+                          } else {
+                              console.log("Server-Error: " + resp.message);
                           }
-                          console.log(resp);
                       });
           }
 

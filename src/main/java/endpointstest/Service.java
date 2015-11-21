@@ -4,8 +4,9 @@ import com.google.api.server.spi.config.Api;
 import com.google.api.server.spi.config.ApiMethod;
 import com.google.appengine.api.oauth.OAuthRequestException;
 import com.google.appengine.api.users.User;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.context.support.SpringBeanAutowiringSupport;
 
 import java.util.List;
@@ -21,16 +22,22 @@ import java.util.List;
 )
 public class Service {
 
+    public static Log log = LogFactory.getLog(Service.class);
+
     public Service() {
         // class instantiated by google endpoints api, we need to force spring processing
         SpringBeanAutowiringSupport.processInjectionBasedOnCurrentContext(this);
     }
 
     @Autowired
-    @Qualifier("ofyService")
     protected AdwordsService adwordsService;
 
-    @ApiMethod(name = "oauth.user", path="oauth.user", httpMethod = ApiMethod.HttpMethod.GET)
+    @ApiMethod(name = "warmup", path="warmup", httpMethod = ApiMethod.HttpMethod.GET)
+    public void warmup() {
+        // add warmup stuff here
+    }
+
+    @ApiMethod(name = "oauth.user", path="oauth.user")
     public User testLoginOauth(User user) throws OAuthRequestException {
         if (user == null) {
             throw new OAuthRequestException("Invalid user");
@@ -38,27 +45,22 @@ public class Service {
         return user;
     }
 
-    @ApiMethod(name = "adwords.listaccounts", path="adwords.listaccounts", httpMethod = ApiMethod.HttpMethod.GET)
-    public List<AdwordsAccount> list(User user) throws OAuthRequestException, AdWordsException {
+    @ApiMethod(name = "adwords.listaccounts", path="adwords.listaccounts")
+    public List<AdwordsAccount> listAccounts(User user) throws OAuthRequestException, AdWordsException {
+        log.info("call listAccounts() with user " + user.getEmail());
         if (user == null) {
             throw new OAuthRequestException("Invalid user");
         }
-        return adwordsService.listAccounts(user.getUserId());
+        return adwordsService.listAccounts(user);
     }
 
-/*
-    @ApiMethod(name = "adwords.listsomething", path="adwords.listsomething", httpMethod = ApiMethod.HttpMethod.GET)
-    public List<String> listSomething() throws OAuthRequestException, AdWordsException {
-        return Arrays.asList(new String[] {"huch", "Hoppla"});
+    @ApiMethod(name = "adwords.listcachedaccounts", path="adwords.listcachedaccounts")
+    public List<AdwordsAccount> listAccountsCached(User user) throws OAuthRequestException, AdWordsException {
+        log.info("call listcachedaccounts() with user " + user.getEmail());
+        if (user == null) {
+            throw new OAuthRequestException("Invalid user");
+        }
+        return adwordsService.listAccountsFromCache(user);
     }
 
-    @ApiMethod(name = "adwords.showuser", path="adwords.showuser" , httpMethod = ApiMethod.HttpMethod.GET)
-    public User showUser() throws OAuthRequestException, AdWordsException {
-        return UserServiceFactory.getUserService().getCurrentUser();
-    }
-
-    protected void setAdwordsService(AdwordsService adwordsService) {
-        this.adwordsService = adwordsService;
-    }
-*/
 }

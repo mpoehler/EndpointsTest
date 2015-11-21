@@ -1,6 +1,7 @@
 package endpointstest;
 
 import com.google.api.client.auth.oauth2.Credential;
+import com.googlecode.objectify.annotation.Cache;
 import com.googlecode.objectify.annotation.Entity;
 import com.googlecode.objectify.annotation.Id;
 
@@ -8,6 +9,7 @@ import com.googlecode.objectify.annotation.Id;
  * Created by marco on 11/20/15.
  */
 @Entity
+@Cache
 public class CredentialEntity {
 
     @Id
@@ -17,6 +19,8 @@ public class CredentialEntity {
 
     private String refreshToken;
 
+    private Long expirationTimeMilliseconds;
+
     public CredentialEntity() {
     }
 
@@ -24,12 +28,7 @@ public class CredentialEntity {
         this.userId = userId;
         this.accessToken = credential.getAccessToken();
         this.refreshToken = credential.getRefreshToken();
-    }
-
-    public CredentialEntity(String userId, String accessToken, String refreshToken) {
-        this.userId = userId;
-        this.accessToken = accessToken;
-        this.refreshToken = refreshToken;
+        this.expirationTimeMilliseconds = credential.getExpirationTimeMilliseconds();
     }
 
     public String getUserId() {
@@ -56,12 +55,21 @@ public class CredentialEntity {
         this.refreshToken = refreshToken;
     }
 
+    public Long getExpirationTimeMilliseconds() {
+        return expirationTimeMilliseconds;
+    }
+
+    public void setExpirationTimeMilliseconds(Long expirationTimeMilliseconds) {
+        this.expirationTimeMilliseconds = expirationTimeMilliseconds;
+    }
+
     @Override
     public String toString() {
         return "CredentialEntity{" +
                 "userId='" + userId + '\'' +
                 ", accessToken='" + accessToken + '\'' +
                 ", refreshToken='" + refreshToken + '\'' +
+                ", expirationTimeMilliseconds=" + expirationTimeMilliseconds +
                 '}';
     }
 }

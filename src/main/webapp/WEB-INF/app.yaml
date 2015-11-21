@@ -15,6 +15,10 @@ handlers:
   - url: /logout
     name: LogoutServlet
     servlet: endpointstest.LogoutServlet
+  - url: /*
+    filter: endpointstest.NamespaceFilter
+    init_params:
+      namespace: 1-6
 
 listeners:
   - org.springframework.web.context.ContextLoaderListener
