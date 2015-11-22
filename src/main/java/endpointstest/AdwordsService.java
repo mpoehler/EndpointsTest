@@ -7,7 +7,9 @@ import com.google.api.ads.adwords.jaxws.v201506.mcm.*;
 import com.google.api.ads.adwords.lib.client.AdWordsSession;
 import com.google.api.ads.common.lib.exception.ValidationException;
 import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.server.spi.config.Named;
 import com.google.appengine.api.users.User;
+import com.google.appengine.api.utils.SystemProperty;
 import com.googlecode.objectify.Key;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.MapConfiguration;
@@ -44,10 +46,10 @@ public class AdwordsService {
      * @param accountId
      * @return
      */
-    public AdWordsSession getSession(String accountId, User user) throws AdWordsException {
-        String key = user.getUserId() + "-" + accountId;
+    public AdWordsSession getSession(String accountId, String userId) throws AdWordsException {
+        String key = userId + "-" + accountId;
         if (!sessionMap.containsKey(key)) {
-            sessionMap.put(key, createSession(accountId, user));
+            sessionMap.put(key, createSession(accountId, userId));
         }
         AdWordsSession adWordsSession = sessionMap.get(key);
         return adWordsSession;
@@ -56,15 +58,15 @@ public class AdwordsService {
     /**
      * creates a session for the given user and account
      * @param accountId the adwords accountId, maybe null for non account specific access
-     * @param user the user
+     * @param userId the user
      * @return a valid AdWordSession, or null if the session can
      */
-    public AdWordsSession createSession(String accountId, User user) throws AdWordsException {
+    public AdWordsSession createSession(String accountId, String userId) throws AdWordsException {
 
         // lookup the credentials
-        Credential credential = credentialStorage.get(user.getEmail());
+        Credential credential = credentialStorage.get(userId);
         if (credential == null) {
-            throw new AdWordsException("Credentials not found for email " + user.getEmail());
+            throw new AdWordsException("Credentials not found for email " + userId);
         }
 
         log.info("loaded credentials from datastore: " + credential);
@@ -105,9 +107,9 @@ public class AdwordsService {
         }
     }
 
-    public List<AdwordsAccount> listAccountsFromCache(User user) {
-        log.info("check cache for account for " + user.getEmail());
-        AdwordsAccountCacheEntry adwordsAccountCacheEntry = ofyService.ofy().load().type(AdwordsAccountCacheEntry.class).id(user.getEmail()).now();
+    public List<AdwordsAccount> listAccountsFromCache(String userId) {
+        log.info("check cache for account for " + userId);
+        AdwordsAccountCacheEntry adwordsAccountCacheEntry = ofyService.ofy().load().type(AdwordsAccountCacheEntry.class).id(userId).now();
         if (adwordsAccountCacheEntry != null) {
             log.info("cache hit");
             return adwordsAccountCacheEntry.getAccounts();
@@ -121,12 +123,12 @@ public class AdwordsService {
     /**
      * lists all Accounts for the given userId
      */
-    public List<AdwordsAccount> listAccounts(User user) throws AdWordsException {
+    public List<AdwordsAccount> listAccounts(String userId) throws AdWordsException {
+        log.info("call listAccounts() with user " + userId);
 
-        log.info("call list Accounts for user " + user);
         List<AdwordsAccount> result = new ArrayList<AdwordsAccount>();
 
-        AdWordsSession session = getSession(null, user);
+        AdWordsSession session = getSession(null, userId);
         log.info("AdwordsSession without clientCustomerId created");
 
         CustomerServiceInterface customerService = adWordsServices.get(session, CustomerServiceInterface.class);
@@ -142,7 +144,7 @@ public class AdwordsService {
 
                 // construct new Adwords Session WITH customerId
                 // session = new AdWordsSession.Builder().withOAuth2Credential(credential).from(config).withClientCustomerId("" + customer.getCustomerId()).build();
-                session = getSession("" + customer.getCustomerId(), user);
+                session = getSession("" + customer.getCustomerId(), userId);
 
                 log.info("Adwords session with clientCustomerId created");
 
@@ -205,7 +207,7 @@ public class AdwordsService {
             e.printStackTrace();
         }
 
-        ofyService.ofy().save().entity(new AdwordsAccountCacheEntry(user.getEmail(), result)).now();
+        ofyService.ofy().save().entity(new AdwordsAccountCacheEntry(userId, result)).now();
 
         return result;
     }

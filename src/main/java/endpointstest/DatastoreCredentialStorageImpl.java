@@ -24,9 +24,11 @@ public class DatastoreCredentialStorageImpl implements CredentialStorage {
     private OfyService ofyService;
 
     @Override
-    public Credential get(String userEmail) {
+    public Credential get(String id) {
 
-        CredentialEntity entity = ofyService.ofy().load().type(CredentialEntity.class).id(userEmail).now();
+        log.info("fetch Credential for " + id);
+
+        CredentialEntity entity = ofyService.ofy().load().type(CredentialEntity.class).id(id).now();
         if (entity == null) {
             return null;
         }
@@ -54,9 +56,9 @@ public class DatastoreCredentialStorageImpl implements CredentialStorage {
     }
 
     @Override
-    public void save(String userEmail, Credential credential) {
-        log.info("save credential for userEmail: " + userEmail);
-        ofyService.ofy().save().entity(new CredentialEntity(userEmail, credential)).now();
+    public void save(String id, Credential credential) {
+        log.info("save credential for : " + id);
+        ofyService.ofy().save().entity(new CredentialEntity(id, credential)).now();
     }
 
     public void setOfyService(OfyService ofyService) {
