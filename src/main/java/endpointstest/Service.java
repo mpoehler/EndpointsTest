@@ -34,14 +34,17 @@ public class Service {
     }
 
     public class BooleanServiceResult {
+        String userId;
         boolean result;
         String message;
 
-        BooleanServiceResult(boolean result) {
+        BooleanServiceResult(String userId, boolean result) {
+            this.userId = userId;
             this.result = result;
         }
 
-        BooleanServiceResult(boolean result, String message) {
+        BooleanServiceResult(String userId, boolean result, String message) {
+            this.userId = userId;
             this.result = result;
             this.message = message;
         }
@@ -61,6 +64,14 @@ public class Service {
         public void setMessage(String message) {
             this.message = message;
         }
+
+        public String getUserId() {
+            return userId;
+        }
+
+        public void setUserId(String userId) {
+            this.userId = userId;
+        }
     }
 
     @Autowired
@@ -76,35 +87,35 @@ public class Service {
     }
 
     @ApiMethod(name = "checkcredentials", path="checkcredentials")
-    public BooleanServiceResult checkcredentials(User user, @Named("uid") String uid) throws OAuthRequestException {
-        log.info("call checkcredentials() with user " + user.getUserId() + " and uid " + uid);
+    public BooleanServiceResult checkcredentials(User user) throws OAuthRequestException {
+        log.info("call checkcredentials() with user " + user.getUserId());
 
         String userId = user.getUserId();
 
         // if we are on development, override userId from parameter
-        if (SystemProperty.environment.value() == SystemProperty.Environment.Value.Development) {
-            userId = uid;
-        }
+        //if (SystemProperty.environment.value() == SystemProperty.Environment.Value.Development) {
+        //    userId = uid;
+        //}
 
         if (user == null) {
             throw new OAuthRequestException("Invalid user");
         }
         if (credentialStorage.get(userId) != null) {
-            return new BooleanServiceResult(true);
+            return new BooleanServiceResult(user.getUserId(), true);
         }
-        return new BooleanServiceResult(false,"No Credentials");
+        return new BooleanServiceResult(user.getUserId(), false,"No Credentials");
     }
 
     @ApiMethod(name = "adwords.listaccounts", path="adwords.listaccounts")
-    public List<AdwordsAccount> listAccounts(User user, @Named("uid") String uid) throws OAuthRequestException, AdWordsException {
-        log.info("call listAccounts() with user " + user.getUserId() + " and uid " + uid);
+    public List<AdwordsAccount> listAccounts(User user) throws OAuthRequestException, AdWordsException {
+        log.info("call listAccounts() with user " + user.getUserId());
 
         String userId = user.getUserId();
 
         // if we are on development, override userId from parameter
-        if (SystemProperty.environment.value() == SystemProperty.Environment.Value.Development) {
-            userId = uid;
-        }
+        //if (SystemProperty.environment.value() == SystemProperty.Environment.Value.Development) {
+        //    userId = uid;
+        //}
 
         if (user == null) {
             throw new OAuthRequestException("Invalid user");
@@ -113,15 +124,15 @@ public class Service {
     }
 
     @ApiMethod(name = "adwords.listcachedaccounts", path="adwords.listcachedaccounts")
-    public List<AdwordsAccount> listAccountsCached(User user, @Named("uid") String uid) throws OAuthRequestException, AdWordsException {
-        log.info("call listcachedaccounts() with user " + user.getUserId() + " and uid " + uid);
+    public List<AdwordsAccount> listAccountsCached(User user) throws OAuthRequestException, AdWordsException {
+        log.info("call listcachedaccounts() with user " + user.getUserId());
 
         String userId = user.getUserId();
 
         // if we are on development, override userId from parameter
-        if (SystemProperty.environment.value() == SystemProperty.Environment.Value.Development) {
-            userId = uid;
-        }
+        //if (SystemProperty.environment.value() == SystemProperty.Environment.Value.Development) {
+        //    userId = uid;
+        //}
 
         if (user == null) {
             throw new OAuthRequestException("Invalid user");

@@ -50,16 +50,16 @@
                     document.getElementById("log").appendChild(el2);
 
                     console.log("now check the credentials");
-                    gapi.client.endpointstest.checkcredentials({ 'uid' : user.id}).execute(function(resp) {
+                    gapi.client.endpointstest.checkcredentials().execute(function(resp) {
                         console.log("result from checkcredentials: " + resp);
                         if (!resp.result.result) {
-                            console.log("no credentials found - forward to /login?uid="+user.id);
-                            //window.location.href = '/login?uid='+user.id;
+                            console.log("no credentials found - forward to /login?uid="+resp.result.userId);
+                            window.location.href = '/login?uid='+resp.result.userId;
                         } else {
                             console.log("credentials found - start bootstrap app, call endpoints and so on...");
 
                             console.log("now call the account list");
-                            gapi.client.endpointstest.adwords.listcachedaccounts({ 'uid' : user.id}).execute(function(resp) {
+                            gapi.client.endpointstest.adwords.listcachedaccounts().execute(function(resp) {
                                 console.log("result from cached adwordslist: " + resp);
                                 if (resp.items) {
                                     // update list
@@ -74,7 +74,7 @@
                             });
 
                             console.log("now call the cached account list");
-                            gapi.client.endpointstest.adwords.listaccounts({ 'uid' : user.id}).execute(function(resp) {
+                            gapi.client.endpointstest.adwords.listaccounts().execute(function(resp) {
                                 console.log("result from adwordslist: " + resp);
                                 // delete existing list
                                 var myNode = document.getElementById("accounts");
