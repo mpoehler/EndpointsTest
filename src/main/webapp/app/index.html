@@ -10,9 +10,6 @@
     <script type="text/javascript">
 
         function init() {
-            console.log("function init called.");
-            // Loads the OAuth and helloworld APIs asynchronously, and triggers login
-            // when they have completed.
             var apisToLoad;
             var callback = function () {
                 if (--apisToLoad == 0) {
@@ -20,13 +17,11 @@
                     signin(false, userAuthed);
                 }
             };
-
             apisToLoad = 2; // must match number of calls to gapi.client.load()
             gapi.client.load('endpointstest', 'v1', callback, '//' + window.location.host + '/_ah/api');
             gapi.client.load('oauth2', 'v2', callback);
         }
         function signin(mode, authorizeCallback) {
-            console.log("function signin called");
             gapi.auth.authorize({
                 client_id: '894185615170-8f7h45jj25e310smph5do6lglnbtnggm.apps.googleusercontent.com',
                 scope: ['https://www.googleapis.com/auth/userinfo.email'],
@@ -35,30 +30,15 @@
         }
 
         function userAuthed() {
-            console.log("function userAuthed called");
             gapi.client.oauth2.userinfo.get().execute(function(user) {
-                console.log(user);
                 var callSuccessful = !user.code;
                 if (callSuccessful) {
-
-                    var el = document.createElement("span");
-                    el.textContent = 'Hi ' + user.name;
-                    document.getElementById("log").appendChild(el);
-
-                    var el2 = document.createElement("img");
-                    el2.src = user.picture;
-                    document.getElementById("log").appendChild(el2);
-
-                    console.log("now check the credentials");
                     gapi.client.endpointstest.checkcredentials().execute(function(resp) {
-                        console.log("result from checkcredentials: " + resp);
                         if (!resp.result.result) {
-                            console.log("no credentials found - forward to /login?uid="+resp.result.userId);
+                            // no credentials found - forward to login
                             window.location.href = '/login?uid='+resp.result.userId;
                         } else {
-                            console.log("credentials found - start bootstrap app, call endpoints and so on...");
 
-                            console.log("now call the account list");
                             gapi.client.endpointstest.adwords.listcachedaccounts().execute(function(resp) {
                                 console.log("result from cached adwordslist: " + resp);
                                 if (resp.items) {
@@ -101,7 +81,6 @@
             gapi.auth.setToken(null);
             window.location.href = '/';
         }
-
 
     </script>
     <script src="https://apis.google.com/js/client.js?onload=init">
